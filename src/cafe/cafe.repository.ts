@@ -5,6 +5,7 @@ import { CreateCafeDto } from './dto/req/createCafe.dto';
 import { UpdateCafeDto } from './dto/req/updateCafe.dto';
 import { GetNearCafeListDto } from './dto/req/getNearCafeList.dto';
 import { GeneralCafeDto } from './dto/res/generalCafe.dto';
+import { SetCafePreferenceDto } from './dto/req/setCafePreference.dto';
 
 @Injectable()
 export class CafeRepository {
@@ -58,5 +59,45 @@ export class CafeRepository {
     console.timeEnd('getNearCafeList');
 
     return result;
+  }
+
+  async getUserCafePreference(userUuid: string, cafeId: number) {
+    return await this.prismaService.userCafe.findUnique({
+      where: { userUuid_cafeId: { userUuid, cafeId } },
+      select: {
+        status: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async updateOrCreatePreference(
+    userUuid: string,
+    cafeId: number,
+    setCafePreference: SetCafePreferenceDto,
+  ) {
+    const preference = await this.getUserCafePreference(userUuid, cafeId);
+
+    if (preference) {
+      return await this.prismaService.userCafe.update({
+        where: {
+          userUuid_cafeId: { userUuid, cafeId },
+        },
+        data: {
+          status: setCafePreference.status,
+        },
+        select: {
+          status: true,
+        },
+      });
+    }
+
+    return await this.prismaService.userCafe.create({
+      data: {
+        userUuid,
+        cafeId,
+        status: setCafePreference.status,
+      },
+    });
   }
 }

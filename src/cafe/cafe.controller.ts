@@ -20,6 +20,7 @@ import { CreateCafeDto } from './dto/req/createCafe.dto';
 import { UpdateCafeDto } from './dto/req/updateCafe.dto';
 import { GetNearCafeListDto } from './dto/req/getNearCafeList.dto';
 import { GeneralCafeDto } from './dto/res/generalCafe.dto';
+import { SetCafePreferenceDto } from './dto/req/setCafePreference.dto';
 
 @Controller('cafe')
 export class CafeController {
@@ -60,5 +61,28 @@ export class CafeController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return await this.cafeService.deleteCafe(id);
+  }
+
+  @Post(':id/preference')
+  @UseGuards(JwtAuthGuard)
+  async setCafePreference(
+    @GetUser() user: User,
+    @Param('id', ParseIntPipe) cafeId: number,
+    @Body() setCafePreferenceDto: SetCafePreferenceDto,
+  ) {
+    return await this.cafeService.setCafePreference(
+      user.uuid,
+      cafeId,
+      setCafePreferenceDto,
+    );
+  }
+
+  @Get(':id/preference')
+  @UseGuards(JwtAuthGuard)
+  async getCafePreference(
+    @GetUser() user: User,
+    @Param('id', ParseIntPipe) cafeId: number,
+  ) {
+    return await this.cafeService.getCafePreference(user.uuid, cafeId);
   }
 }

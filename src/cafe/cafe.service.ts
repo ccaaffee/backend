@@ -8,6 +8,7 @@ import { CreateCafeDto } from './dto/req/createCafe.dto';
 import { UpdateCafeDto } from './dto/req/updateCafe.dto';
 import { GetNearCafeListDto } from './dto/req/getNearCafeList.dto';
 import { GeneralCafeDto } from './dto/res/generalCafe.dto';
+import { SetCafePreferenceDto } from './dto/req/setCafePreference.dto';
 
 @Injectable()
 export class CafeService {
@@ -67,5 +68,33 @@ export class CafeService {
       longitude >= 124.6 &&
       longitude <= 131.9
     );
+  }
+
+  async getCafePreference(userUuid: string, cafeId: number) {
+    const cafe = await this.cafeRepository.getCafe(cafeId);
+    if (!cafe) {
+      throw new NotFoundException('Cafe not found');
+    }
+
+    return await this.cafeRepository.getUserCafePreference(userUuid, cafeId);
+  }
+
+  async setCafePreference(
+    userUuid: string,
+    cafeId: number,
+    setCafePreferenceDto: SetCafePreferenceDto,
+  ) {
+    const cafe = await this.cafeRepository.getCafe(cafeId);
+    if (!cafe) {
+      throw new NotFoundException('Cafe not found');
+    }
+
+    const preference = await this.cafeRepository.updateOrCreatePreference(
+      userUuid,
+      cafeId,
+      setCafePreferenceDto,
+    );
+
+    return preference;
   }
 }
