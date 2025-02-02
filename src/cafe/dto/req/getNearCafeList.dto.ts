@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber, Max, Min } from 'class-validator';
 
 export class GetNearCafeListDto {
   @ApiProperty({
@@ -30,6 +30,8 @@ export class GetNearCafeListDto {
   })
   @IsNumber()
   @IsNotEmpty()
+  @Min(100, { message: 'Radius must be at least 100 meters' })
+  @Max(5000, { message: 'Radius cannot exceed 5000 meters' })
   @Type(() => Number)
   radiusInMeter: number;
 }
