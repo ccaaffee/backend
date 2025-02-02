@@ -1,0 +1,43 @@
+name: Deploy Cafe-search Backend to Server
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Add SSH Key to Agent
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+
+      - name: Transfer updated code to server
+        run: |
+          scp -r -i ~/.ssh/id_rsa . ubuntu@${{ secrets.HOST }}:~/backend-temp
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.HOST }} << 'EOF'
+            rm -rf ~/backend
+            mv ~/backend-temp ~/backend
+          EOF
+
+      - name: Deploy and Restart on EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.HOST }} << 'EOF'
+            cd ~/backend
+            git pull origin main
+            npm ci
+            npx prisma generate
+            npx prisma migrate deploy
+            npm run build
+            pm2 reload cafe_backend
+          EOF
