@@ -17,4 +17,40 @@ model User {
   uuid      String   @id @default(uuid())
   kakaoId   String   @unique
   createdAt DateTime @default(now())
+
+  userCafes UserCafe[]
+}
+
+model Cafe {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String
+  latitude  Float // GPS 위도
+  longitude Float // GPS 경도
+  // openHours String? // 영업 시간 // 좀 더 세분화 필요
+  instagram String? // 가게 인스타 계정 링크
+  phone     String? // 가게 연락처
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userCafes UserCafe[]
+}
+
+enum PreferenceStatus {
+  LIKE
+  DISLIKE
+  HOLD
+}
+
+model UserCafe {
+  status    PreferenceStatus @default(HOLD)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user     User   @relation(fields: [userUuid], references: [uuid], onDelete: Cascade)
+  userUuid String
+  cafe     Cafe   @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  cafeId   Int
+
+  @@id([userUuid, cafeId])
 }
