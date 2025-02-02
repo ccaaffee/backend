@@ -88,6 +88,7 @@ export class CafeRepository {
         },
         select: {
           status: true,
+          updatedAt: true,
         },
       });
     }
