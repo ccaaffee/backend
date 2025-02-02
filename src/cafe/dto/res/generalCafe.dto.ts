@@ -9,9 +9,9 @@ import {
 
 export class GeneralCafeDto {
   @ApiProperty({
-    type: String,
+    type: Number,
     description: 'ID of Cafe',
-    example: '13',
+    example: 13,
   })
   @IsNumber()
   @IsNotEmpty()
@@ -55,7 +55,7 @@ export class GeneralCafeDto {
 
   @ApiProperty({
     type: String,
-    description: "Cafe's Instgram Link",
+    description: "Cafe's Instagram Link",
     example: 'https://www.instagram.com/cafe_baleine',
   })
   @IsString()

@@ -40,7 +40,7 @@ export class CreateCafeDto {
 
   @ApiProperty({
     type: String,
-    description: "Cafe's Instgram Link",
+    description: "Cafe's Instagram Link",
     example: 'https://www.instagram.com/cafe_baleine',
   })
   @IsString()
