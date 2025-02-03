@@ -20,8 +20,8 @@ export class AuthService {
     this.kakaoRestApiKey = this.configService.get<string>('KAKAO_REST_API_KEY');
     this.kakaoRedirectUri =
       this.configService.get<string>('KAKAO_REDIRECT_URI');
-    this.kakaoAuthUri = this.configService.get<string>('KAKAO_AUTH_URL');
-    this.kakaoTokenUri = this.configService.get<string>('KAKAO_TOKEN_URL');
+    this.kakaoAuthUri = this.configService.get<string>('KAKAO_AUTH_URI');
+    this.kakaoTokenUri = this.configService.get<string>('KAKAO_TOKEN_URI');
   }
 
   /**
@@ -35,7 +35,11 @@ export class AuthService {
       response_type: 'code',
     }).toString();
 
-    return `${baseUrl}?${queryParams}`;
+    const url = `${baseUrl}?${queryParams}`;
+
+    console.log(url);
+
+    return url;
   }
 
   /**
@@ -45,6 +49,9 @@ export class AuthService {
     const tokenReponse = await this.getKakaoToken(code);
 
     const accessToken = tokenReponse.access_token;
+
+    console.log('kakao accesstoken');
+    console.log(accessToken);
 
     // 2) 발급한 access token으로 유저정보 요청 to 카카오 로그인 서버
     const kakaoUserInfo = await this.getKakaoUserInfo(accessToken);
@@ -59,6 +66,23 @@ export class AuthService {
     }
 
     // 4) JWT 발급
+    const payload = { sub: user.uuid };
+    const jwtToken = this.jwtService.sign(payload);
+
+    return jwtToken;
+  }
+
+  async kakaoLoginWithAccessToken(accessToken: string): Promise<string> {
+    const kakaoUserInfo = await this.getKakaoUserInfo(accessToken);
+
+    const kakaoId = kakaoUserInfo.id.toString();
+
+    let user = await this.userService.findByKakaoId(kakaoId);
+
+    if (!user) {
+      user = await this.userService.createUser(kakaoId);
+    }
+
     const payload = { sub: user.uuid };
     const jwtToken = this.jwtService.sign(payload);
 
