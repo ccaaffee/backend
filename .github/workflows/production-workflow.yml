@@ -22,22 +22,14 @@ jobs:
           ssh-add ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
 
-      - name: Transfer updated code to server
-        run: |
-          scp -r -i ~/.ssh/id_rsa . ubuntu@${{ secrets.HOST }}:~/backend-temp
-          ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.HOST }} << 'EOF'
-            rm -rf ~/backend
-            mv ~/backend-temp ~/backend
-          EOF
-
       - name: Deploy and Restart on EC2
         run: |
           ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.HOST }} << 'EOF'
             cd ~/backend
             git pull origin main
             npm ci
-            npx prisma generate
             npx prisma migrate deploy
+            npx prisma generate
             npm run build
             pm2 reload cafe_backend
           EOF
