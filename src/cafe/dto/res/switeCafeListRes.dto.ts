@@ -12,5 +12,5 @@ export class SwipeCafeListResDto {
   cafeCount: number;
 
   @ApiProperty()
-  hasNextPage: boolean; // 다음 페이지가 존재하는지 여부
+  hasNextPage: boolean; // Indicates whether there is a next page
 }
