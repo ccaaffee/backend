@@ -122,6 +122,14 @@ export class CafeService {
       take,
     );
 
+    if (page < 1) {
+      throw new BadRequestException('Page must be greater than 0');
+    }
+
+    if (take < 1 || take > 20) {
+      throw new BadRequestException('Take must be between 1 and 20');
+    }
+
     const result: SwipeCafeListResDto = {
       data,
       nextPage: page + 1,
