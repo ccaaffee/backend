@@ -5,22 +5,22 @@ import { IsNotEmpty, IsNumber, Max, Min } from 'class-validator';
 export class GetNearCafeListDto {
   @ApiProperty({
     type: Number,
-    description: "Cafe's Latitude",
+    description: 'My Latitude',
     example: 37.485772,
   })
   @IsNumber()
   @IsNotEmpty()
-  // @Type(() => Number)
+  @Type(() => Number)
   latitude: number;
 
   @ApiProperty({
     type: Number,
-    description: "Cafe's Longitude",
+    description: 'My Longitude',
     example: 126.927983,
   })
   @IsNumber()
   @IsNotEmpty()
-  // @Type(() => Number)
+  @Type(() => Number)
   longitude: number;
 
   @ApiProperty({

@@ -20,7 +20,7 @@ import { User } from '@prisma/client';
 import { CreateCafeDto } from './dto/req/createCafe.dto';
 import { UpdateCafeDto } from './dto/req/updateCafe.dto';
 import { GetNearCafeListDto } from './dto/req/getNearCafeList.dto';
-import { GeneralCafeDto } from './dto/res/generalCafe.dto';
+import { GeneralCafeResDto } from './dto/res/generalCafe.dto';
 import { SetCafePreferenceDto } from './dto/req/setCafePreference.dto';
 import {
   ApiBearerAuth,
@@ -30,6 +30,8 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { PreferenceStatusDto } from './dto/res/preferenceStatus.dto';
+import { SwipeCafeListResDto } from './dto/res/switeCafeListRes.dto';
+import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
 
 @Controller('cafe')
 export class CafeController {
@@ -39,7 +41,7 @@ export class CafeController {
     summary: 'get near cafe list',
   })
   @ApiOkResponse({
-    type: Array<GeneralCafeDto>,
+    type: Array<GeneralCafeResDto>,
     description: 'Near cafe list based on given gps',
   })
   @ApiInternalServerErrorResponse({
@@ -48,7 +50,7 @@ export class CafeController {
   @Get('near')
   async getNearCafeList(
     @Query() query: GetNearCafeListDto,
-  ): Promise<GeneralCafeDto[]> {
+  ): Promise<GeneralCafeResDto[]> {
     return await this.cafeService.getNearCafeList(query);
   }
 
@@ -56,7 +58,7 @@ export class CafeController {
     summary: 'get detailed cafe info',
   })
   @ApiOkResponse({
-    type: GeneralCafeDto,
+    type: GeneralCafeResDto,
     description: 'Detailed cafe information',
   })
   @ApiInternalServerErrorResponse({
@@ -72,7 +74,7 @@ export class CafeController {
     description: 'only available adminitrator or permitted person',
   })
   @ApiOkResponse({
-    type: GeneralCafeDto,
+    type: GeneralCafeResDto,
     description: 'Created cafe information',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
@@ -90,7 +92,7 @@ export class CafeController {
     summary: 'update cafe info',
   })
   @ApiOkResponse({
-    type: GeneralCafeDto,
+    type: GeneralCafeResDto,
     description: 'Updated cafe information with detail',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
@@ -173,5 +175,28 @@ export class CafeController {
     @Param('id', ParseIntPipe) cafeId: number,
   ): Promise<PreferenceStatusDto> {
     return await this.cafeService.getCafePreference(user.uuid, cafeId);
+  }
+
+  @ApiOperation({
+    summary: 'get swiping near cafe list',
+    description:
+      '카페를 평가(스와이핑)하기 위해, 좌표를 기반으로 일정 거리 내에 있는 카페들을 반환합니다.',
+  })
+  @ApiOkResponse({
+    type: SwipeCafeListResDto,
+    description: 'Swiping target cafe list',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal Server Error',
+  })
+  @ApiBearerAuth('JWT')
+  @Get('swipe/search')
+  @UseGuards(JwtAuthGuard)
+  async getSwipeCafeList(
+    @GetUser() user: User,
+    @Query() query: GetSwipeCafeListDto,
+  ): Promise<SwipeCafeListResDto> {
+    return await this.cafeService.getSwipeCafeList(user, query);
   }
 }
