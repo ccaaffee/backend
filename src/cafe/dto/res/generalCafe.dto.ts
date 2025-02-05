@@ -7,7 +7,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class GeneralCafeDto {
+export class GeneralCafeResDto {
   @ApiProperty({
     type: Number,
     description: 'ID of Cafe',
