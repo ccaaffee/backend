@@ -12,7 +12,7 @@ export class GetSwipeCafeListDto extends GetNearCafeListDto {
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
-  page: number;
+  page: number = 1;
 
   @ApiProperty({
     example: 20,

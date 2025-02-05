@@ -108,9 +108,10 @@ export class CafeRepository {
   async getSwipeCafeList(
     userUuid: string,
     query: GetSwipeCafeListDto,
-    page: number,
-    take = 20,
   ): Promise<{ data: GeneralCafeResDto[]; hasNextPage: boolean }> {
+    const page = query.page;
+    const take = query.take;
+
     const skip = (page - 1) * take;
     const limit = take + 1; // +1 to check for the next page
     const DISLIKE_EXPIRE_DAYS = 7;
@@ -145,7 +146,6 @@ export class CafeRepository {
 
     return {
       data: rawResult,
-
       hasNextPage,
     };
   }
