@@ -183,7 +183,7 @@ export class CafeController {
       '카페를 평가(스와이핑)하기 위해, 좌표를 기반으로 일정 거리 내에 있는 카페들을 반환합니다.',
   })
   @ApiOkResponse({
-    type: PreferenceStatusDto,
+    type: SwipeCafeListResDto,
     description: 'Swiping target cafe list',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
