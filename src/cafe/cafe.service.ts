@@ -7,8 +7,11 @@ import { CafeRepository } from './cafe.repository';
 import { CreateCafeDto } from './dto/req/createCafe.dto';
 import { UpdateCafeDto } from './dto/req/updateCafe.dto';
 import { GetNearCafeListDto } from './dto/req/getNearCafeList.dto';
-import { GeneralCafeDto } from './dto/res/generalCafe.dto';
+import { GeneralCafeResDto } from './dto/res/generalCafe.dto';
 import { SetCafePreferenceDto } from './dto/req/setCafePreference.dto';
+import { User } from '@prisma/client';
+import { SwipeCafeListResDto } from './dto/res/switeCafeListRes.dto';
+import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
 
 @Injectable()
 export class CafeService {
@@ -24,7 +27,9 @@ export class CafeService {
     return cafe;
   }
 
-  async getNearCafeList(query: GetNearCafeListDto): Promise<GeneralCafeDto[]> {
+  async getNearCafeList(
+    query: GetNearCafeListDto,
+  ): Promise<GeneralCafeResDto[]> {
     // 한국 내부 좌표인지 확인
     if (!this.isValidKoreanGPS(query.latitude, query.longitude)) {
       throw new BadRequestException(
@@ -96,5 +101,34 @@ export class CafeService {
     );
 
     return preference;
+  }
+
+  async getSwipeCafeList(
+    user: User,
+    query: GetSwipeCafeListDto,
+    page = 1,
+    take = 20,
+  ): Promise<SwipeCafeListResDto> {
+    if (!this.isValidKoreanGPS(query.latitude, query.longitude)) {
+      throw new BadRequestException(
+        'Wrong GPS coordinates (out of South Korea)',
+      );
+    }
+
+    const { data, hasNextPage } = await this.cafeRepository.getSwipeCafeList(
+      user.uuid,
+      query,
+      page,
+      take,
+    );
+
+    const result: SwipeCafeListResDto = {
+      data,
+      nextPage: page + 1,
+      cafeCount: data.length,
+      hasNextPage,
+    };
+
+    return result;
   }
 }
