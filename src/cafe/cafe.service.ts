@@ -106,33 +106,31 @@ export class CafeService {
   async getSwipeCafeList(
     user: User,
     query: GetSwipeCafeListDto,
-    page = 1,
-    take = 20,
   ): Promise<SwipeCafeListResDto> {
+    // GPS coordinates Validation
     if (!this.isValidKoreanGPS(query.latitude, query.longitude)) {
       throw new BadRequestException(
         'Wrong GPS coordinates (out of South Korea)',
       );
     }
 
-    const { data, hasNextPage } = await this.cafeRepository.getSwipeCafeList(
-      user.uuid,
-      query,
-      page,
-      take,
-    );
-
-    if (page < 1) {
+    // Pagination values Validation
+    if (query.page < 1) {
       throw new BadRequestException('Page must be greater than 0');
     }
 
-    if (take < 1 || take > 20) {
+    if (query.take < 1 || query.take > 20) {
       throw new BadRequestException('Take must be between 1 and 20');
     }
 
+    const { data, hasNextPage } = await this.cafeRepository.getSwipeCafeList(
+      user.uuid,
+      query,
+    );
+
     const result: SwipeCafeListResDto = {
       data,
-      nextPage: page + 1,
+      nextPage: query.page + 1,
       cafeCount: data.length,
       hasNextPage,
     };
