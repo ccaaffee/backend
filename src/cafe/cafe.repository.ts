@@ -141,7 +141,7 @@ export class CafeRepository {
     let hasNextPage = false;
     if (rawResult.length > take) {
       hasNextPage = true;
-      rawResult.pop(); // 마지막 1개는 실제 응답으로 내려주지 않음
+      rawResult.pop(); // Remove the extra item used to determine if there's a next page
     }
 
     return {
