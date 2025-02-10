@@ -131,7 +131,7 @@ export class CafeRepository {
   ): Promise<GeneralCafeResDto[]> {
     const cafeList = await this.prismaService.$queryRaw<GeneralCafeResDto[]>`
       SELECT 
-        c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.phone, c.createdAt, 
+        c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.naverMap, c.phone, c.createdAt, 
         CASE 
           WHEN COUNT(i.id) = 0 THEN JSON_ARRAY()
           ELSE JSON_ARRAYAGG(
@@ -210,7 +210,7 @@ export class CafeRepository {
 
     const rawResult = await this.prismaService.$queryRaw<GeneralCafeResDto[]>`
       SELECT 
-        c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.phone, c.createdAt, 
+        c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.naverMap, c.phone, c.createdAt, 
         CASE 
           WHEN COUNT(i.id) = 0 THEN JSON_ARRAY()
           ELSE JSON_ARRAYAGG(

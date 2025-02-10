@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
 } from 'class-validator';
 
 export class GeneralCafeResDto {
@@ -58,15 +59,29 @@ export class GeneralCafeResDto {
     type: String,
     description: "Cafe's Instagram Link",
     example: 'https://www.instagram.com/cafe_baleine',
+    required: false,
   })
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @IsString()
   @IsOptional()
   instagram?: string;
 
   @ApiProperty({
     type: String,
+    description: "Cafe's Navermap Link",
+    example: 'https://naver.me/G2EI8IYr',
+    required: false,
+  })
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
+  @IsString()
+  @IsOptional()
+  naverMap?: string;
+
+  @ApiProperty({
+    type: String,
     description: "Cafe's Phone number",
     example: '02-1234-5678',
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -84,6 +99,7 @@ export class GeneralCafeResDto {
         createdAt: '2025-01-30T15:34:28.284Z',
       },
     ],
+    required: false,
   })
   @IsString({ each: true })
   @IsOptional()

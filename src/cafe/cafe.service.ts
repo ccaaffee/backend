@@ -10,7 +10,7 @@ import { GetNearCafeListDto } from './dto/req/getNearCafeList.dto';
 import { GeneralCafeResDto } from './dto/res/generalCafe.dto';
 import { SetCafePreferenceDto } from './dto/req/setCafePreference.dto';
 import { User } from '@prisma/client';
-import { SwipeCafeListResDto } from './dto/res/switeCafeListRes.dto';
+import { SwipeCafeListResDto } from './dto/res/swifeCafeListRes.dto';
 import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
 import { ImageService } from 'src/image/image.service';
 
