@@ -80,6 +80,7 @@ export class CafeService {
 
     if (images) {
       // delete original cafe images
+      await this.imageService.validateImages(images);
       await this.cafeRepository.deleteCafeImages(id);
       await this.cafeRepository.createCafeImages(id, cafe.name, images);
 
