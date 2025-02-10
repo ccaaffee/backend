@@ -30,7 +30,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { PreferenceStatusDto } from './dto/res/preferenceStatus.dto';
-import { SwipeCafeListResDto } from './dto/res/switeCafeListRes.dto';
+import { SwipeCafeListResDto } from './dto/res/swifeCafeListRes.dto';
 import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
 
 @Controller('cafe')
