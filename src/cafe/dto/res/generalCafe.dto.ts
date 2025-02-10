@@ -6,6 +6,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
 } from 'class-validator';
 
 export class GeneralCafeResDto {
@@ -60,6 +61,7 @@ export class GeneralCafeResDto {
     example: 'https://www.instagram.com/cafe_baleine',
     required: false,
   })
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @IsString()
   @IsOptional()
   instagram?: string;
@@ -70,6 +72,7 @@ export class GeneralCafeResDto {
     example: 'https://naver.me/G2EI8IYr',
     required: false,
   })
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @IsString()
   @IsOptional()
   naverMap?: string;

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 
 export class CreateCafeDto {
   @ApiProperty({
@@ -44,6 +50,7 @@ export class CreateCafeDto {
     example: 'https://www.instagram.com/cafe_baleine',
     required: false,
   })
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @IsString()
   @IsOptional()
   instagram?: string;
@@ -54,6 +61,7 @@ export class CreateCafeDto {
     example: 'https://naver.me/G2EI8IYr',
     required: false,
   })
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   @IsString()
   @IsOptional()
   naverMap?: string;
