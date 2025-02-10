@@ -30,6 +30,32 @@ export class CafeRepository {
     });
   }
 
+  async getMyLikeCafeList(userUuid: string): Promise<GeneralCafeResDto[]> {
+    return await this.prismaService.cafe.findMany({
+      where: {
+        userCafes: {
+          some: {
+            userUuid,
+            status: 'LIKE',
+          },
+        },
+      },
+      include: {
+        images: {
+          select: {
+            id: true,
+            order: true,
+            url: true,
+            cafeId: true,
+            name: true,
+            createdAt: true,
+          },
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
+  }
+
   // image는 null로 처리
   async createCafe(createCafeDto: CreateCafeDto) {
     return await this.prismaService.cafe.create({

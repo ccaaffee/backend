@@ -31,6 +31,10 @@ export class CafeService {
     return await this.applyS3SignedUrlForCafe(cafe);
   }
 
+  async getMyLikeCafeList(userUuid: string): Promise<GeneralCafeResDto[]> {
+    return await this.cafeRepository.getMyLikeCafeList(userUuid);
+  }
+
   async getNearCafeList(
     query: GetNearCafeListDto,
   ): Promise<GeneralCafeResDto[]> {

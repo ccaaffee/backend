@@ -55,6 +55,23 @@ export class CafeController {
   }
 
   @ApiOperation({
+    summary: 'get my like cafe list',
+  })
+  @ApiOkResponse({
+    type: Array<GeneralCafeResDto>,
+    description: 'Cafe list that I liked',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal Server Error',
+  })
+  @ApiBearerAuth('JWT')
+  @Get('like')
+  @UseGuards(JwtAuthGuard)
+  async getMyLikeCafeList(@GetUser() user: User): Promise<GeneralCafeResDto[]> {
+    return await this.cafeService.getMyLikeCafeList(user.uuid);
+  }
+
+  @ApiOperation({
     summary: 'get detailed cafe info',
   })
   @ApiOkResponse({
@@ -83,6 +100,7 @@ export class CafeController {
   })
   @ApiBearerAuth('JWT')
   @Post()
+  @UseGuards(JwtAuthGuard)
   async createCafe(@Body() createCafeDto: CreateCafeDto) {
     // 추후, 관리자 혹은 특정 권한을 사진 사용자만 등록할 수 있도록 수정 필요
     return await this.cafeService.createCafe(createCafeDto);
