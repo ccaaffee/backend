@@ -42,6 +42,7 @@ export class CreateCafeDto {
     type: String,
     description: "Cafe's Instagram Link",
     example: 'https://www.instagram.com/cafe_baleine',
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -49,8 +50,19 @@ export class CreateCafeDto {
 
   @ApiProperty({
     type: String,
+    description: "Cafe's Navermap Link",
+    example: 'https://naver.me/G2EI8IYr',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  naverMap?: string;
+
+  @ApiProperty({
+    type: String,
     description: "Cafe's Phone number",
     example: '02-1234-5678',
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -59,7 +71,7 @@ export class CreateCafeDto {
   @ApiProperty({
     type: Array<string>,
     description: 'Image file s3 key list',
-    example: ['path1/image1.png', 'path1/image2.png'],
+    example: ['staging/1739171538853-x51z517a99e006.png'],
     required: false,
   })
   @IsString({ each: true })
