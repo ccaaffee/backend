@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { GeneralCafeResDto } from './generalCafe.dto';
 
-export class SwipeCafeListResDto {
+export class PaginationCafeListResDto {
   @ApiProperty({ type: [GeneralCafeResDto] })
   data: GeneralCafeResDto[];
 
