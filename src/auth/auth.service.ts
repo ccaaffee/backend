@@ -37,8 +37,6 @@ export class AuthService {
 
     const url = `${baseUrl}?${queryParams}`;
 
-    console.log(url);
-
     return url;
   }
 
@@ -49,9 +47,6 @@ export class AuthService {
     const tokenReponse = await this.getKakaoToken(code);
 
     const accessToken = tokenReponse.access_token;
-
-    console.log('kakao accesstoken');
-    console.log(accessToken);
 
     // 2) 발급한 access token으로 유저정보 요청 to 카카오 로그인 서버
     const kakaoUserInfo = await this.getKakaoUserInfo(accessToken);
