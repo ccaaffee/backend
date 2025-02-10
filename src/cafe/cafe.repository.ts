@@ -6,6 +6,7 @@ import { GetNearCafeListDto } from './dto/req/getNearCafeList.dto';
 import { SetCafePreferenceDto } from './dto/req/setCafePreference.dto';
 import { GeneralCafeResDto } from './dto/res/generalCafe.dto';
 import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
+import { PaginationDto } from './dto/req/pagination.dto';
 
 @Injectable()
 export class CafeRepository {
@@ -30,8 +31,20 @@ export class CafeRepository {
     });
   }
 
-  async getMyLikeCafeList(userUuid: string): Promise<GeneralCafeResDto[]> {
-    return await this.prismaService.cafe.findMany({
+  async getMyLikeCafeList(
+    userUuid: string,
+    query: PaginationDto,
+  ): Promise<{
+    data: GeneralCafeResDto[];
+    hasNextPage: boolean;
+  }> {
+    const page = query.page;
+    const take = query.take;
+
+    const skip = (page - 1) * take;
+    const limit = take + 1; // +1 to check for the next page
+
+    const rawResult = await this.prismaService.cafe.findMany({
       where: {
         userCafes: {
           some: {
@@ -40,6 +53,8 @@ export class CafeRepository {
           },
         },
       },
+      skip: skip,
+      take: limit,
       include: {
         images: {
           select: {
@@ -53,7 +68,21 @@ export class CafeRepository {
           orderBy: { order: 'asc' },
         },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
+
+    let hasNextPage = false;
+    if (rawResult.length > take) {
+      hasNextPage = true;
+      rawResult.pop(); // Remove the extra item used to determine if there's a next page
+    }
+
+    return {
+      data: rawResult,
+      hasNextPage,
+    };
   }
 
   // image는 null로 처리

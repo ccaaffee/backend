@@ -30,8 +30,9 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { PreferenceStatusDto } from './dto/res/preferenceStatus.dto';
-import { SwipeCafeListResDto } from './dto/res/swifeCafeListRes.dto';
+import { PaginationCafeListResDto } from './dto/res/paginationCafeListRes.dto';
 import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
+import { PaginationDto } from './dto/req/pagination.dto';
 
 @Controller('cafe')
 export class CafeController {
@@ -55,20 +56,23 @@ export class CafeController {
   }
 
   @ApiOperation({
-    summary: 'get my like cafe list',
+    summary: 'get my liked cafe list',
   })
   @ApiOkResponse({
-    type: Array<GeneralCafeResDto>,
+    type: Array<PaginationCafeListResDto>,
     description: 'Cafe list that I liked',
   })
   @ApiInternalServerErrorResponse({
     description: 'Internal Server Error',
   })
   @ApiBearerAuth('JWT')
-  @Get('like')
+  @Get('liked')
   @UseGuards(JwtAuthGuard)
-  async getMyLikeCafeList(@GetUser() user: User): Promise<GeneralCafeResDto[]> {
-    return await this.cafeService.getMyLikeCafeList(user.uuid);
+  async getMyLikeCafeList(
+    @GetUser() user: User,
+    @Query() query: PaginationDto,
+  ): Promise<PaginationCafeListResDto> {
+    return await this.cafeService.getMyLikeCafeList(user.uuid, query);
   }
 
   @ApiOperation({
@@ -201,7 +205,7 @@ export class CafeController {
       '카페를 평가(스와이핑)하기 위해, 좌표를 기반으로 일정 거리 내에 있는 카페들을 반환합니다.',
   })
   @ApiOkResponse({
-    type: SwipeCafeListResDto,
+    type: PaginationCafeListResDto,
     description: 'Swiping target cafe list',
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
@@ -214,7 +218,7 @@ export class CafeController {
   async getSwipeCafeList(
     @GetUser() user: User,
     @Query() query: GetSwipeCafeListDto,
-  ): Promise<SwipeCafeListResDto> {
+  ): Promise<PaginationCafeListResDto> {
     return await this.cafeService.getSwipeCafeList(user, query);
   }
 }
