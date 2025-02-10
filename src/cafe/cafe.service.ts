@@ -10,9 +10,10 @@ import { GetNearCafeListDto } from './dto/req/getNearCafeList.dto';
 import { GeneralCafeResDto } from './dto/res/generalCafe.dto';
 import { SetCafePreferenceDto } from './dto/req/setCafePreference.dto';
 import { User } from '@prisma/client';
-import { SwipeCafeListResDto } from './dto/res/swifeCafeListRes.dto';
+import { PaginationCafeListResDto } from './dto/res/paginationCafeListRes.dto';
 import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
 import { ImageService } from 'src/image/image.service';
+import { PaginationDto } from './dto/req/pagination.dto';
 
 @Injectable()
 export class CafeService {
@@ -29,6 +30,27 @@ export class CafeService {
     }
 
     return await this.applyS3SignedUrlForCafe(cafe);
+  }
+
+  async getMyLikeCafeList(
+    userUuid: string,
+    query: PaginationDto,
+  ): Promise<PaginationCafeListResDto> {
+    const { data, hasNextPage } = await this.cafeRepository.getMyLikeCafeList(
+      userUuid,
+      query,
+    );
+
+    const cafeList = await this.applyS3SignedUrlsForCafeList(data);
+
+    const result: PaginationCafeListResDto = {
+      data: cafeList,
+      nextPage: hasNextPage ? query.page + 1 : null,
+      cafeCount: data.length,
+      hasNextPage,
+    };
+
+    return result;
   }
 
   async getNearCafeList(
@@ -140,7 +162,7 @@ export class CafeService {
   async getSwipeCafeList(
     user: User,
     query: GetSwipeCafeListDto,
-  ): Promise<SwipeCafeListResDto> {
+  ): Promise<PaginationCafeListResDto> {
     // GPS coordinates Validation
     if (!this.isValidKoreanGPS(query.latitude, query.longitude)) {
       throw new BadRequestException(
@@ -164,9 +186,9 @@ export class CafeService {
 
     const cafeList = await this.applyS3SignedUrlsForCafeList(data);
 
-    const result: SwipeCafeListResDto = {
+    const result: PaginationCafeListResDto = {
       data: cafeList,
-      nextPage: query.page + 1,
+      nextPage: hasNextPage ? query.page + 1 : null,
       cafeCount: data.length,
       hasNextPage,
     };

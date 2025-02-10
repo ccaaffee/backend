@@ -1,26 +1,8 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { IntersectionType } from '@nestjs/swagger';
 import { GetNearCafeListDto } from './getNearCafeList.dto';
-import { IsNumber, IsOptional } from 'class-validator';
-import { Type } from 'class-transformer';
+import { PaginationDto } from './pagination.dto';
 
-export class GetSwipeCafeListDto extends GetNearCafeListDto {
-  @ApiProperty({
-    example: 1,
-    description: 'Request page number(default: 1)',
-    required: false,
-  })
-  @IsNumber()
-  @IsOptional()
-  @Type(() => Number)
-  page: number = 1;
-
-  @ApiProperty({
-    example: 20,
-    description: 'Number of pages to get(default: 20)',
-    required: false,
-  })
-  @IsNumber()
-  @IsOptional()
-  @Type(() => Number)
-  take?: number = 20;
-}
+export class GetSwipeCafeListDto extends IntersectionType(
+  GetNearCafeListDto,
+  PaginationDto,
+) {}
