@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Cafe } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCafeDto } from './dto/req/createCafe.dto';
 import { UpdateCafeDto } from './dto/req/updateCafe.dto';
@@ -12,7 +11,7 @@ import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
 export class CafeRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getCafe(id: number): Promise<Cafe> {
+  async getCafe(id: number): Promise<GeneralCafeResDto> {
     return await this.prismaService.cafe.findUnique({
       where: { id },
       include: {
@@ -21,6 +20,7 @@ export class CafeRepository {
             id: true,
             order: true,
             url: true,
+            cafeId: true,
             name: true,
             createdAt: true,
           },
@@ -60,6 +60,7 @@ export class CafeRepository {
             id: true,
             order: true,
             url: true,
+            cafeId: true,
             name: true,
             createdAt: true,
           },
@@ -98,6 +99,7 @@ export class CafeRepository {
             id: true,
             order: true,
             url: true,
+            cafeId: true,
             name: true,
             createdAt: true,
           },
@@ -130,15 +132,18 @@ export class CafeRepository {
     const cafeList = await this.prismaService.$queryRaw<GeneralCafeResDto[]>`
       SELECT 
         c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.phone, c.createdAt, 
-        JSON_ARRAYAGG(
-          JSON_OBJECT(
-            'id', i.id,
-            'order', i.order,
-            'url', i.url,
-            'description', i.description,
-            'createdAt', i.createdAt
+        CASE 
+          WHEN COUNT(i.id) = 0 THEN JSON_ARRAY()
+          ELSE JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'id', i.id,
+              'order', i.order,
+              'url', i.url,
+              'name', i.name,
+              'createdAt', i.createdAt
+            )
           )
-        ) AS images
+        END AS images
       FROM Cafe AS c
       LEFT JOIN Image AS i ON c.id = i.cafeId
       WHERE ST_Distance_Sphere(
@@ -204,11 +209,26 @@ export class CafeRepository {
     const DISLIKE_EXPIRE_DAYS = 7;
 
     const rawResult = await this.prismaService.$queryRaw<GeneralCafeResDto[]>`
-      SELECT c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.phone, c.createdAt 
-      FROM Cafe as c
-      LEFT JOIN UserCafe as uc
-        ON c.id = uc.cafeId
-        AND uc.userUuid = ${userUuid}
+      SELECT 
+        c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.phone, c.createdAt, 
+        CASE 
+          WHEN COUNT(i.id) = 0 THEN JSON_ARRAY()
+          ELSE JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'id', i.id,
+              'order', i.order,
+              'url', i.url,
+              'name', i.name,
+              'createdAt', i.createdAt
+            )
+          )
+        END AS images
+      FROM Cafe AS c
+        LEFT JOIN Image AS i 
+          ON c.id = i.cafeId
+        LEFT JOIN UserCafe AS uc
+          ON c.id = uc.cafeId
+          AND uc.userUuid = ${userUuid}
       WHERE ST_Distance_Sphere(
         point(c.longitude, c.latitude),
           point(${query.longitude}, ${query.latitude})
@@ -221,6 +241,7 @@ export class CafeRepository {
             AND 
             uc.updatedAt < DATE_SUB(NOW(), INTERVAL ${DISLIKE_EXPIRE_DAYS} DAY))
         )
+      GROUP By c.id
       ORDER BY c.id
       LIMIT ${limit} OFFSET ${skip}
     `;
