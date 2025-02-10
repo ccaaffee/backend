@@ -75,8 +75,15 @@ export class GeneralCafeResDto {
   @ApiProperty({
     type: Array<Image>,
     description: 'Image file s3 key list',
-    example: ['path1/image1.png', 'path1/image2.png'],
-    required: false,
+    example: [
+      {
+        id: 1,
+        name: 'cafe name',
+        url: 'staging/1739171538853-x51z517a99e006.png',
+        cafeId: 1,
+        createdAt: '2025-01-30T15:34:28.284Z',
+      },
+    ],
   })
   @IsString({ each: true })
   @IsOptional()
