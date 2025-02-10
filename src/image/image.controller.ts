@@ -56,7 +56,16 @@ export class ImageController {
   @ApiBearerAuth('JWT')
   @Post('upload')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FilesInterceptor('images'))
+  @UseInterceptors(
+    FilesInterceptor('images', 10, {
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/^image\/(jpg|jpeg|png)$/)) {
+          cb(new BadRequestException('Only image files are allowed'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
   async uploadImages(
     @GetUser() user: User,
     @UploadedFiles() files: Express.Multer.File[],
