@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Cafe } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCafeDto } from './dto/req/createCafe.dto';
 import { UpdateCafeDto } from './dto/req/updateCafe.dto';
@@ -12,32 +11,115 @@ import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
 export class CafeRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getCafe(id: number): Promise<Cafe> {
+  async getCafe(id: number): Promise<GeneralCafeResDto> {
     return await this.prismaService.cafe.findUnique({
       where: { id },
+      include: {
+        images: {
+          select: {
+            id: true,
+            order: true,
+            url: true,
+            cafeId: true,
+            name: true,
+            createdAt: true,
+          },
+          orderBy: { id: 'asc' },
+        },
+      },
     });
   }
 
+  // image는 null로 처리
   async createCafe(createCafeDto: CreateCafeDto) {
     return await this.prismaService.cafe.create({
-      data: { ...createCafeDto },
+      data: {
+        ...createCafeDto,
+        images: {},
+      },
     });
   }
 
-  async updateCafe(id: number, updateCafeDto: UpdateCafeDto) {
-    return await this.prismaService.cafe.update({
+  async createCafeWithImages({ images, ...cafeData }: CreateCafeDto) {
+    return await this.prismaService.cafe.create({
+      data: {
+        ...cafeData,
+        images: {
+          create: [
+            ...images.map((image, idx) => ({
+              order: idx,
+              url: image,
+              name: cafeData.name,
+            })),
+          ],
+        },
+      },
+      include: {
+        images: {
+          select: {
+            id: true,
+            order: true,
+            url: true,
+            cafeId: true,
+            name: true,
+            createdAt: true,
+          },
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
+  }
+
+  // 특정 카페에 이미지 생성
+  async createCafeImages(id: number, name: string, images: string[]) {
+    return await this.prismaService.image.createMany({
+      data: [
+        ...images.map((image, idx) => ({
+          order: idx,
+          url: image,
+          name: name,
+          cafeId: id,
+        })),
+      ],
+    });
+  }
+
+  // 카페 정보 업데이트 (이미지는 제외)
+  async updateCafe(id: number, updateCafeData: Omit<UpdateCafeDto, 'images'>) {
+    const updatedCafe = await this.prismaService.cafe.update({
       where: {
         id: id,
       },
       data: {
-        ...updateCafeDto,
+        ...updateCafeData,
+      },
+      include: {
+        images: {
+          select: {
+            id: true,
+            order: true,
+            url: true,
+            cafeId: true,
+            name: true,
+            createdAt: true,
+          },
+          orderBy: { id: 'asc' },
+        },
       },
     });
+
+    return updatedCafe;
   }
 
   async deleteCafe(id: number) {
     return await this.prismaService.cafe.delete({
       where: { id },
+    });
+  }
+
+  async deleteCafeImages(id: number) {
+    return await this.prismaService.image.deleteMany({
+      where: { cafeId: id },
     });
   }
 
@@ -47,21 +129,31 @@ export class CafeRepository {
   async getNearCafeList(
     query: GetNearCafeListDto,
   ): Promise<GeneralCafeResDto[]> {
-    console.time('getNearCafeList');
-
-    const result = await this.prismaService.$queryRaw<GeneralCafeResDto[]>`
-      SELECT id, name, address, latitude, longitude, instagram, phone, createdAt 
-      FROM Cafe
+    const cafeList = await this.prismaService.$queryRaw<GeneralCafeResDto[]>`
+      SELECT 
+        c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.phone, c.createdAt, 
+        CASE 
+          WHEN COUNT(i.id) = 0 THEN JSON_ARRAY()
+          ELSE JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'id', i.id,
+              'order', i.order,
+              'url', i.url,
+              'name', i.name,
+              'createdAt', i.createdAt
+            )
+          )
+        END AS images
+      FROM Cafe AS c
+      LEFT JOIN Image AS i ON c.id = i.cafeId
       WHERE ST_Distance_Sphere(
         point(longitude, latitude),
         point(${query.longitude}, ${query.latitude})
       ) <= ${query.radiusInMeter}
+      GROUP BY c.id
     `;
-    console.log(result.length);
 
-    console.timeEnd('getNearCafeList');
-
-    return result;
+    return cafeList;
   }
 
   async getUserCafePreference(userUuid: string, cafeId: number) {
@@ -117,11 +209,26 @@ export class CafeRepository {
     const DISLIKE_EXPIRE_DAYS = 7;
 
     const rawResult = await this.prismaService.$queryRaw<GeneralCafeResDto[]>`
-      SELECT c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.phone, c.createdAt 
-      FROM Cafe as c
-      LEFT JOIN UserCafe as uc
-        ON c.id = uc.cafeId
-        AND uc.userUuid = ${userUuid}
+      SELECT 
+        c.id, c.name, c.address, c.latitude, c.longitude, c.instagram, c.phone, c.createdAt, 
+        CASE 
+          WHEN COUNT(i.id) = 0 THEN JSON_ARRAY()
+          ELSE JSON_ARRAYAGG(
+            JSON_OBJECT(
+              'id', i.id,
+              'order', i.order,
+              'url', i.url,
+              'name', i.name,
+              'createdAt', i.createdAt
+            )
+          )
+        END AS images
+      FROM Cafe AS c
+        LEFT JOIN Image AS i 
+          ON c.id = i.cafeId
+        LEFT JOIN UserCafe AS uc
+          ON c.id = uc.cafeId
+          AND uc.userUuid = ${userUuid}
       WHERE ST_Distance_Sphere(
         point(c.longitude, c.latitude),
           point(${query.longitude}, ${query.latitude})
@@ -134,6 +241,7 @@ export class CafeRepository {
             AND 
             uc.updatedAt < DATE_SUB(NOW(), INTERVAL ${DISLIKE_EXPIRE_DAYS} DAY))
         )
+      GROUP By c.id
       ORDER BY c.id
       LIMIT ${limit} OFFSET ${skip}
     `;
@@ -141,7 +249,7 @@ export class CafeRepository {
     let hasNextPage = false;
     if (rawResult.length > take) {
       hasNextPage = true;
-      rawResult.pop(); // 마지막 1개는 실제 응답으로 내려주지 않음
+      rawResult.pop(); // Remove the extra item used to determine if there's a next page
     }
 
     return {

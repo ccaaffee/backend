@@ -55,4 +55,14 @@ export class CreateCafeDto {
   @IsString()
   @IsOptional()
   phone?: string;
+
+  @ApiProperty({
+    type: Array<string>,
+    description: 'Image file s3 key list',
+    example: ['path1/image1.png', 'path1/image2.png'],
+    required: false,
+  })
+  @IsString({ each: true })
+  @IsOptional()
+  images?: string[];
 }

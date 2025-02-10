@@ -12,10 +12,14 @@ import { SetCafePreferenceDto } from './dto/req/setCafePreference.dto';
 import { User } from '@prisma/client';
 import { SwipeCafeListResDto } from './dto/res/switeCafeListRes.dto';
 import { GetSwipeCafeListDto } from './dto/req/getSwipeCafeList.dto';
+import { ImageService } from 'src/image/image.service';
 
 @Injectable()
 export class CafeService {
-  constructor(private readonly cafeRepository: CafeRepository) {}
+  constructor(
+    private readonly cafeRepository: CafeRepository,
+    private readonly imageService: ImageService,
+  ) {}
 
   async getCafe(id: number) {
     const cafe = await this.cafeRepository.getCafe(id);
@@ -24,7 +28,7 @@ export class CafeService {
       throw new NotFoundException('Cafe not found');
     }
 
-    return cafe;
+    return await this.applyS3SignedUrlForCafe(cafe);
   }
 
   async getNearCafeList(
@@ -37,23 +41,53 @@ export class CafeService {
       );
     }
 
-    return await this.cafeRepository.getNearCafeList(query);
+    const cafeList = await this.cafeRepository.getNearCafeList(query);
+
+    return await this.applyS3SignedUrlsForCafeList(cafeList);
   }
 
   async createCafe(createCafeDto: CreateCafeDto) {
     // 일반 게시물 생성하듯이 하면 안됨 -> 중복 업로드 방지 과정이 필요함
 
-    return await this.cafeRepository.createCafe(createCafeDto);
+    let cafe;
+
+    // Case 1: Including Images
+    if (createCafeDto.images?.length) {
+      // Image Validation by Key
+      await this.imageService.validateImages(createCafeDto.images);
+
+      cafe = await this.cafeRepository.createCafeWithImages(createCafeDto);
+    } else {
+      // Case 2: Not including Image
+      cafe = await this.cafeRepository.createCafe(createCafeDto);
+    }
+
+    return await this.applyS3SignedUrlForCafe(cafe);
   }
 
-  async updateCafe(id: number, updateCafeDto: UpdateCafeDto) {
-    const cafe = await this.cafeRepository.getCafe(id);
+  async updateCafe(id: number, { images, ...updateCafeDto }: UpdateCafeDto) {
+    const oldCafe = await this.cafeRepository.getCafe(id);
 
-    if (!cafe) {
+    if (!oldCafe) {
       throw new NotFoundException('Cafe not found');
     }
 
-    return await this.cafeRepository.updateCafe(id, updateCafeDto);
+    let cafe = oldCafe;
+
+    if (updateCafeDto) {
+      cafe = await this.cafeRepository.updateCafe(id, updateCafeDto);
+    }
+
+    if (images) {
+      // delete original cafe images
+      await this.imageService.validateImages(images);
+      await this.cafeRepository.deleteCafeImages(id);
+      await this.cafeRepository.createCafeImages(id, cafe.name, images);
+
+      cafe = await this.cafeRepository.getCafe(id);
+    }
+
+    return await this.applyS3SignedUrlForCafe(cafe);
   }
 
   async deleteCafe(id: number) {
@@ -128,13 +162,53 @@ export class CafeService {
       query,
     );
 
+    const cafeList = await this.applyS3SignedUrlsForCafeList(data);
+
     const result: SwipeCafeListResDto = {
-      data,
+      data: cafeList,
       nextPage: query.page + 1,
       cafeCount: data.length,
       hasNextPage,
     };
 
     return result;
+  }
+
+  // Cafe List를 return하기 전, images의 url을 signed urls로 변경
+  async applyS3SignedUrlsForCafeList(
+    cafeList: GeneralCafeResDto[],
+  ): Promise<GeneralCafeResDto[]> {
+    const signedCageList = await Promise.all(
+      cafeList.map(async (cafe) => {
+        return await this.applyS3SignedUrlForCafe(cafe);
+      }),
+    );
+
+    return signedCageList;
+  }
+
+  // Cafe를 return하기 전, images의 url을 signed urls로 변경
+  async applyS3SignedUrlForCafe(
+    cafe: GeneralCafeResDto,
+  ): Promise<GeneralCafeResDto> {
+    if (!cafe.images) {
+      return cafe;
+    }
+
+    const signedImages = await Promise.all(
+      cafe.images.map(async (image) => {
+        const signedUrl = await this.imageService.generateSignedUrl(image.url);
+
+        return {
+          ...image,
+          url: signedUrl,
+        };
+      }),
+    );
+
+    return {
+      ...cafe,
+      images: signedImages,
+    };
   }
 }

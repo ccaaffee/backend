@@ -33,7 +33,6 @@ export class UserController {
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   async getProfile(@GetUser() user: UserInfo): Promise<UserInfo> {
-    console.log(user);
     return user;
   }
 }

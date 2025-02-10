@@ -34,6 +34,7 @@ model Cafe {
   updatedAt DateTime @updatedAt
 
   userCafes UserCafe[]
+  images    Image[]
 }
 
 enum PreferenceStatus {
@@ -52,4 +53,15 @@ model UserCafe {
   cafeId   Int
 
   @@id([userUuid, cafeId])
+}
+
+model Image {
+  id        Int      @id @default(autoincrement())
+  order     Int      @default(0)
+  url       String
+  name      String   @default("image name")
+  createdAt DateTime @default(now())
+
+  cafe   Cafe @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  cafeId Int
 }
