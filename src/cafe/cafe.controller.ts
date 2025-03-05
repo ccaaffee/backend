@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -59,7 +60,7 @@ export class CafeController {
     summary: 'get my liked cafe list',
   })
   @ApiOkResponse({
-    type: Array<PaginationCafeListResDto>,
+    type: PaginationCafeListResDto,
     description: 'Cafe list that I liked',
   })
   @ApiInternalServerErrorResponse({
@@ -79,7 +80,7 @@ export class CafeController {
     summary: 'search cafe by name',
   })
   @ApiOkResponse({
-    type: Array<PaginationCafeListResDto>,
+    type: PaginationCafeListResDto,
     description: 'Cafe list containing search keyword',
   })
   @ApiInternalServerErrorResponse({
@@ -90,6 +91,10 @@ export class CafeController {
     @Query('name') name: string,
     @Query() query: PaginationDto,
   ): Promise<PaginationCafeListResDto> {
+    if (!name || name.trim() === '') {
+      throw new BadRequestException('Name is required');
+    }
+
     return await this.cafeService.searchCafeByName(name, query);
   }
 
