@@ -85,6 +85,54 @@ export class CafeRepository {
     };
   }
 
+  async searchCafeByName(
+    name: string,
+    query: PaginationDto,
+  ): Promise<{
+    data: GeneralCafeResDto[];
+    hasNextPage: boolean;
+  }> {
+    const page = query.page;
+    const take = query.take;
+
+    const skip = (page - 1) * take;
+    const limit = take + 1; // +1 to check for the next page
+
+    const rawResult = await this.prismaService.cafe.findMany({
+      where: {
+        name: {
+          contains: name,
+        },
+      },
+      skip: skip,
+      take: limit,
+      include: {
+        images: {
+          select: {
+            id: true,
+            order: true,
+            url: true,
+            cafeId: true,
+            name: true,
+            createdAt: true,
+          },
+          orderBy: { order: 'asc' },
+        },
+      },
+    });
+
+    let hasNextPage = false;
+    if (rawResult.length > take) {
+      hasNextPage = true;
+      rawResult.pop();
+    }
+
+    return {
+      data: rawResult,
+      hasNextPage,
+    };
+  }
+
   // image는 null로 처리
   async createCafe(createCafeDto: CreateCafeDto) {
     return await this.prismaService.cafe.create({
