@@ -53,6 +53,24 @@ export class CafeService {
     return result;
   }
 
+  async searchCafeByName(name: string, query: PaginationDto) {
+    const { data, hasNextPage } = await this.cafeRepository.searchCafeByName(
+      name,
+      query,
+    );
+
+    const cafeList = await this.applyS3SignedUrlsForCafeList(data);
+
+    const result: PaginationCafeListResDto = {
+      data: cafeList,
+      nextPage: hasNextPage ? query.page + 1 : null,
+      cafeCount: data.length,
+      hasNextPage,
+    };
+
+    return result;
+  }
+
   async getNearCafeList(
     query: GetNearCafeListDto,
   ): Promise<GeneralCafeResDto[]> {

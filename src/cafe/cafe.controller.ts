@@ -76,6 +76,24 @@ export class CafeController {
   }
 
   @ApiOperation({
+    summary: 'search cafe by name',
+  })
+  @ApiOkResponse({
+    type: Array<PaginationCafeListResDto>,
+    description: 'Cafe list containing search keyword',
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal Server Error',
+  })
+  @Get('search/name')
+  async searchCafeByName(
+    @Query('name') name: string,
+    @Query() query: PaginationDto,
+  ): Promise<PaginationCafeListResDto> {
+    return await this.cafeService.searchCafeByName(name, query);
+  }
+
+  @ApiOperation({
     summary: 'get detailed cafe info',
   })
   @ApiOkResponse({
