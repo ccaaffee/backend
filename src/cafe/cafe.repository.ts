@@ -27,6 +27,7 @@ export class CafeRepository {
           },
           orderBy: { id: 'asc' },
         },
+        openHours: true,
       },
     });
   }
@@ -67,6 +68,7 @@ export class CafeRepository {
           },
           orderBy: { order: 'asc' },
         },
+        openHours: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -118,6 +120,7 @@ export class CafeRepository {
           },
           orderBy: { order: 'asc' },
         },
+        openHours: true,
       },
     });
 
@@ -138,7 +141,13 @@ export class CafeRepository {
     return await this.prismaService.cafe.create({
       data: {
         ...createCafeDto,
+        openHours: {
+          create: createCafeDto.openHours,
+        },
         images: {},
+      },
+      include: {
+        openHours: true,
       },
     });
   }
@@ -147,6 +156,9 @@ export class CafeRepository {
     return await this.prismaService.cafe.create({
       data: {
         ...cafeData,
+        openHours: {
+          create: cafeData.openHours,
+        },
         images: {
           create: [
             ...images.map((image, idx) => ({
@@ -169,6 +181,7 @@ export class CafeRepository {
           },
           orderBy: { order: 'asc' },
         },
+        openHours: true,
       },
     });
   }
@@ -195,6 +208,9 @@ export class CafeRepository {
       },
       data: {
         ...updateCafeData,
+        openHours: {
+          update: updateCafeData.openHours,
+        },
       },
       include: {
         images: {
@@ -208,6 +224,7 @@ export class CafeRepository {
           },
           orderBy: { id: 'asc' },
         },
+        openHours: true,
       },
     });
 
@@ -246,9 +263,23 @@ export class CafeRepository {
               'createdAt', i.createdAt
             )
           )
-        END AS images
+        END AS images,
+        CASE
+          WHEN oh.cafeId IS NULL THEN NULL
+          ELSE JSON_OBJECT(
+            'monday', oh.monday,
+            'tuesday', oh.tuesday,
+            'wednesday', oh.wednesday,
+            'thursday', oh.thursday,
+            'friday', oh.friday,
+            'saturday', oh.saturday,
+            'sunday', oh.sunday
+          )
+        END AS openHours
       FROM Cafe AS c
       LEFT JOIN Image AS i ON c.id = i.cafeId
+      LEFT JOIN OpenHours AS oh
+        ON c.id = oh.cafeId
       WHERE ST_Distance_Sphere(
         point(longitude, latitude),
         point(${query.longitude}, ${query.latitude})
@@ -325,13 +356,27 @@ export class CafeRepository {
               'createdAt', i.createdAt
             )
           )
-        END AS images
+        END AS images,
+        CASE
+          WHEN oh.cafeId IS NULL THEN NULL
+          ELSE JSON_OBJECT(
+            'monday', oh.monday,
+            'tuesday', oh.tuesday,
+            'wednesday', oh.wednesday,
+            'thursday', oh.thursday,
+            'friday', oh.friday,
+            'saturday', oh.saturday,
+            'sunday', oh.sunday
+          )
+        END AS openHours
       FROM Cafe AS c
         LEFT JOIN Image AS i 
           ON c.id = i.cafeId
         LEFT JOIN UserCafe AS uc
           ON c.id = uc.cafeId
           AND uc.userUuid = ${userUuid}
+        LEFT JOIN OpenHours AS oh
+          ON c.id = oh.cafeId
       WHERE ST_Distance_Sphere(
         point(c.longitude, c.latitude),
           point(${query.longitude}, ${query.latitude})

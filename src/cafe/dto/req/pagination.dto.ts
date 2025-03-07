@@ -19,8 +19,7 @@ export class PaginationDto {
     description: 'Number of pages to get(default: 20)',
     required: false,
   })
-  @Min(1)
-  @Max(1)
+  @Max(20)
   @IsNumber()
   @IsOptional()
   @Type(() => Number)

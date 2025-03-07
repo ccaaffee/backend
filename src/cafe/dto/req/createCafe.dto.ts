@@ -5,7 +5,10 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  ValidateNested,
 } from 'class-validator';
+import { OpenHoursDto } from './openHours.dto';
+import { Type } from 'class-transformer';
 
 export class CreateCafeDto {
   @ApiProperty({
@@ -85,4 +88,14 @@ export class CreateCafeDto {
   @IsString({ each: true })
   @IsOptional()
   images?: string[];
+
+  @ApiProperty({
+    type: OpenHoursDto,
+    description: 'Cafe open hours',
+    required: false,
+  })
+  @ValidateNested()
+  @Type(() => OpenHoursDto)
+  @IsOptional()
+  openHours?: OpenHoursDto;
 }
