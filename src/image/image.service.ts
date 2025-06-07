@@ -17,9 +17,15 @@ import { ConfigService } from '@nestjs/config';
 
 import sharp from 'sharp';
 
+export enum ImageType {
+  CAFE = 'cafe',
+  PROFILE = 'profile',
+}
+
 @Injectable()
 export class ImageService {
-  bucketName: string;
+  private readonly bucketName: string;
+  private readonly environment: string;
 
   constructor(
     private readonly configService: ConfigService,
@@ -35,28 +41,46 @@ export class ImageService {
       },
     });
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME');
+    this.environment =
+      this.configService.get<string>('NODE_ENV') || 'development';
   }
 
   /**
    * 이미지 파일을 여러 개 업로드
    * @param files Express.Multer.File[]
+   * @param type ImageType
    * @returns string[]
    */
-  async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
-    return Promise.all(files.map((file) => this.uploadImage(file)));
+  async uploadImages(
+    files: Express.Multer.File[],
+    type: ImageType = ImageType.CAFE,
+  ): Promise<string[]> {
+    return Promise.all(files.map((file) => this.uploadImage(file, type)));
+  }
+
+  /**
+   * 프로필 이미지 업로드 (1:1 비율로 크롭)
+   * @param file Express.Multer.File
+   * @returns string
+   */
+  async uploadProfileImage(file: Express.Multer.File): Promise<string> {
+    const processedFile = await this.processProfileImage(file);
+    return this.uploadImage(processedFile, ImageType.PROFILE);
   }
 
   /**
    * S3에 단일 이미지 업로드
    * @param file Express.Multer.File
+   * @param type ImageType
    * @returns string
    */
-  private async uploadImage(file: Express.Multer.File): Promise<string> {
-    const key = `staging/${Date.now()}-${Math.random().toString(36).substring(2)}${file.originalname}`;
+  private async uploadImage(
+    file: Express.Multer.File,
+    type: ImageType,
+  ): Promise<string> {
+    const key = `${this.environment}/${type}/${Date.now()}-${Math.random().toString(36).substring(2)}${file.originalname}`;
 
-    const webpFile = await this.convertToWebp({
-      ...file,
-    });
+    const webpFile = await this.convertToWebp(file);
 
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
@@ -74,6 +98,35 @@ export class ImageService {
     } catch (error) {
       console.log(error);
       throw new InternalServerErrorException('Failed to upload file');
+    }
+  }
+
+  /**
+   * 프로필 이미지 처리 (1:1 비율로 크롭)
+   * @param file Express.Multer.File
+   * @returns Express.Multer.File
+   */
+  private async processProfileImage(
+    file: Express.Multer.File,
+  ): Promise<Express.Multer.File> {
+    try {
+      const metadata = await sharp(file.buffer).metadata();
+      const size = Math.min(metadata.width, metadata.height);
+
+      file.buffer = await sharp(file.buffer)
+        .resize(size, size, {
+          fit: 'cover',
+          position: 'center',
+        })
+        .toBuffer();
+
+      return file;
+    } catch (error) {
+      console.log(error);
+      if (error.message.includes('unsupported image format')) {
+        throw new BadRequestException('Unsupported image format');
+      }
+      throw new InternalServerErrorException('Failed to process profile image');
     }
   }
 
