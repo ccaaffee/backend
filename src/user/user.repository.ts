@@ -5,10 +5,18 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class UserRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
+  private async generateUniqueNickname(): Promise<string> {
+    const totalUsers = await this.prismaService.user.count();
+    const newUserNumber = totalUsers + 1;
+    return `사용자${newUserNumber}`;
+  }
+
   async createUser(kakaoId: string) {
+    const nickname = await this.generateUniqueNickname();
     return this.prismaService.user.create({
       data: {
         kakaoId,
+        nickname,
       },
     });
   }
@@ -24,6 +32,21 @@ export class UserRepository {
   async findByUuid(uuid: string) {
     return this.prismaService.user.findUnique({
       where: { uuid },
+    });
+  }
+
+  // 닉네임으로 유저 찾기
+  async findByNickname(nickname: string) {
+    return this.prismaService.user.findUnique({
+      where: { nickname },
+    });
+  }
+
+  // 닉네임 업데이트
+  async updateNickname(uuid: string, nickname: string) {
+    return this.prismaService.user.update({
+      where: { uuid },
+      data: { nickname },
     });
   }
 }

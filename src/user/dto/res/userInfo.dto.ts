@@ -16,6 +16,13 @@ export class UserInfoDto {
   kakaoId: string;
 
   @ApiProperty({
+    type: String,
+    description: "User's nickname",
+    example: '커피러버',
+  })
+  nickname: string;
+
+  @ApiProperty({
     type: Date,
     description: 'Account created Date',
     example: '2025-01-30T15:34:28.284Z',

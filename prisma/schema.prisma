@@ -16,6 +16,7 @@ datasource db {
 model User {
   uuid      String   @id @default(uuid())
   kakaoId   String   @unique
+  nickname  String?  @unique
   createdAt DateTime @default(now())
 
   userCafes UserCafe[]
