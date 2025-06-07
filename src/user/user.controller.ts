@@ -16,6 +16,7 @@ import { GetUser } from './decorator/get-user.decorator';
 import { UserInfo } from 'src/auth/types/userInfo.type';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiConsumes,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
@@ -23,7 +24,6 @@ import {
   ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
-  ApiBody,
 } from '@nestjs/swagger';
 import { UserInfoDto } from './dto/res/userInfo.dto';
 import { UpdateNicknameDto } from './dto/req/updateNickname.dto';
@@ -67,7 +67,7 @@ export class UserController {
     type: NicknameDuplicateCheckDto,
     description: 'Return whether nickname is duplicate or not',
   })
-  @Get('nickname/check')
+  @Get('profile/nickname/check')
   async checkNicknameDuplicate(
     @Query('nickname') nickname: string,
   ): Promise<NicknameDuplicateCheckDto> {
@@ -87,7 +87,7 @@ export class UserController {
     description: 'Internal Server Error',
   })
   @ApiBearerAuth('JWT')
-  @Patch('nickname')
+  @Patch('profile/nickname')
   @UseGuards(JwtAuthGuard)
   async updateNickname(
     @GetUser() user: User,
@@ -127,7 +127,7 @@ export class UserController {
     description: 'Internal Server Error',
   })
   @ApiBearerAuth('JWT')
-  @Post('profile-image')
+  @Post('profile/image')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('image', {
