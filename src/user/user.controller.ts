@@ -1,20 +1,35 @@
-import { Controller, Get, UseGuards, Body, Patch, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Body,
+  Patch,
+  Query,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from 'src/auth/jwt.auth.strategy';
 import { GetUser } from './decorator/get-user.decorator';
 import { UserInfo } from 'src/auth/types/userInfo.type';
 import {
   ApiBearerAuth,
+  ApiConsumes,
   ApiInternalServerErrorResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 import { UserInfoDto } from './dto/res/userInfo.dto';
 import { UpdateNicknameDto } from './dto/req/updateNickname.dto';
 import { NicknameDuplicateCheckDto } from './dto/res/nicknameDuplicateCheck.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { User } from '@prisma/client';
 
 @ApiTags('User')
 @Controller('user')
@@ -35,8 +50,8 @@ export class UserController {
   @ApiBearerAuth('JWT')
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async getProfile(@GetUser() user: UserInfo): Promise<UserInfo> {
-    return user;
+  async getProfile(@GetUser() user: User): Promise<UserInfo> {
+    return this.userService.formatUserForResponse(user);
   }
 
   @ApiOperation({
@@ -75,12 +90,67 @@ export class UserController {
   @Patch('nickname')
   @UseGuards(JwtAuthGuard)
   async updateNickname(
-    @GetUser() user: UserInfo,
+    @GetUser() user: User,
     @Body() updateNicknameDto: UpdateNicknameDto,
   ): Promise<UserInfo> {
-    return this.userService.updateNickname(
+    const updatedUser = await this.userService.updateNickname(
       user.uuid,
       updateNicknameDto.nickname,
     );
+    return this.userService.formatUserForResponse(updatedUser);
+  }
+
+  @ApiOperation({
+    summary: 'upload profile image',
+    description:
+      '프로필 이미지를 업로드합니다. 이미지는 1:1 비율로 자동 크롭됩니다.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        image: {
+          type: 'string',
+          format: 'binary',
+          description: '프로필 이미지 파일 (jpg, jpeg, png만 가능)',
+        },
+      },
+    },
+  })
+  @ApiOkResponse({
+    type: UserInfoDto,
+    description: 'Return updated profile',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal Server Error',
+  })
+  @ApiBearerAuth('JWT')
+  @Post('profile-image')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/^image\/(jpg|jpeg|png)$/)) {
+          cb(new BadRequestException('Only image files are allowed'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async uploadProfileImage(
+    @GetUser() user: User,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<UserInfo> {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    const updatedUser = await this.userService.updateProfileImage(
+      user.uuid,
+      file,
+    );
+    return this.userService.formatUserForResponse(updatedUser);
   }
 }

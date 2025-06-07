@@ -14,10 +14,11 @@ datasource db {
 }
 
 model User {
-  uuid      String   @id @default(uuid())
-  kakaoId   String   @unique
-  nickname  String?  @unique
-  createdAt DateTime @default(now())
+  uuid         String   @id @default(uuid())
+  kakaoId      String   @unique
+  nickname     String?  @unique
+  profileImage String?
+  createdAt    DateTime @default(now())
 
   userCafes UserCafe[]
 }
