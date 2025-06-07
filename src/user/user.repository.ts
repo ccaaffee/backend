@@ -49,4 +49,12 @@ export class UserRepository {
       data: { nickname },
     });
   }
+
+  // 프로필 이미지 업데이트
+  async updateProfileImage(uuid: string, profileImage: string) {
+    return this.prismaService.user.update({
+      where: { uuid },
+      data: { profileImage },
+    });
+  }
 }
