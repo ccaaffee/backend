@@ -179,6 +179,23 @@ export class CafeService {
     return preference;
   }
 
+  async deleteCafePreference(userUuid: string, cafeId: number) {
+    const cafe = await this.cafeRepository.getCafe(cafeId);
+    if (!cafe) {
+      throw new NotFoundException('Cafe not found');
+    }
+
+    const preference = await this.cafeRepository.getUserCafePreference(
+      userUuid,
+      cafeId,
+    );
+    if (!preference) {
+      throw new NotFoundException('Preference not found');
+    }
+
+    await this.cafeRepository.deleteUserCafePreference(userUuid, cafeId);
+  }
+
   async getSwipeCafeList(
     user: User,
     query: GetSwipeCafeListDto,
