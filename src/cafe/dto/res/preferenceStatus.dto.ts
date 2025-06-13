@@ -6,7 +6,7 @@ export class PreferenceStatusDto {
   @ApiProperty({
     enum: PreferenceStatus,
     enumName: 'PreferenceStatus',
-    description: 'Preference Status of Cafe(LIKE, DISLIKE, HOLD)',
+    description: 'Preference Status of Cafe(LIKE, DISLIKE)',
     example: PreferenceStatus.LIKE,
   })
   @IsEnum(PreferenceStatus)
