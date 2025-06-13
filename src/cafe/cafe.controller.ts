@@ -164,7 +164,7 @@ export class CafeController {
   }
 
   @ApiOperation({
-    summary: 'delete cate',
+    summary: 'delete cafe',
   })
   @ApiOkResponse({
     type: HttpCode(201),
@@ -207,6 +207,26 @@ export class CafeController {
       cafeId,
       setCafePreferenceDto,
     );
+  }
+
+  @ApiOperation({
+    summary: 'delete cafe preference status',
+  })
+  @ApiOkResponse({
+    description: 'Successfully deleted preference',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal Server Error',
+  })
+  @ApiBearerAuth('JWT')
+  @Delete(':id/preference')
+  @UseGuards(JwtAuthGuard)
+  async deleteCafePreference(
+    @GetUser() user: User,
+    @Param('id', ParseIntPipe) cafeId: number,
+  ) {
+    await this.cafeService.deleteCafePreference(user.uuid, cafeId);
   }
 
   @ApiOperation({

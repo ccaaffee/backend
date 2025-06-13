@@ -376,6 +376,14 @@ export class CafeRepository {
     });
   }
 
+  async deleteUserCafePreference(userUuid: string, cafeId: number) {
+    return await this.prismaService.userCafe.delete({
+      where: {
+        userUuid_cafeId: { userUuid, cafeId },
+      },
+    });
+  }
+
   async getSwipeCafeList(
     userUuid: string,
     query: GetSwipeCafeListDto,
