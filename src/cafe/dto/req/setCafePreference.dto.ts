@@ -6,12 +6,12 @@ export class SetCafePreferenceDto {
   @ApiProperty({
     enum: PreferenceStatus,
     enumName: 'Preference Status',
-    description: 'Preference Status Type(LIKE, DISLIKE, HOLD)',
+    description: 'Preference Status Type(LIKE, DISLIKE)',
     example: PreferenceStatus.LIKE,
   })
   @IsNotEmpty()
   @IsEnum(PreferenceStatus, {
-    message: 'status는 LIKE, DISLIKE, HOLD 중 하나여야 합니다.',
+    message: 'status는 LIKE, DISLIKE 중 하나여야 합니다.',
   })
   status: PreferenceStatus;
 }
