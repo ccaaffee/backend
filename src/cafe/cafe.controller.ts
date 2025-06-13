@@ -49,11 +49,14 @@ export class CafeController {
   @ApiInternalServerErrorResponse({
     description: 'Internal Server Error',
   })
+  @ApiBearerAuth('JWT')
   @Get('near')
+  @UseGuards(JwtAuthGuard)
   async getNearCafeList(
+    @GetUser() user: User,
     @Query() query: GetNearCafeListDto,
   ): Promise<GeneralCafeResDto[]> {
-    return await this.cafeService.getNearCafeList(query);
+    return await this.cafeService.getNearCafeList(query, user.uuid);
   }
 
   @ApiOperation({
@@ -86,16 +89,19 @@ export class CafeController {
   @ApiInternalServerErrorResponse({
     description: 'Internal Server Error',
   })
+  @ApiBearerAuth('JWT')
   @Get('search/name')
+  @UseGuards(JwtAuthGuard)
   async searchCafeByName(
     @Query('name') name: string,
     @Query() query: PaginationDto,
+    @GetUser() user?: User,
   ): Promise<PaginationCafeListResDto> {
     if (!name || name.trim() === '') {
       throw new BadRequestException('Name is required');
     }
 
-    return await this.cafeService.searchCafeByName(name, query);
+    return await this.cafeService.searchCafeByName(name, query, user?.uuid);
   }
 
   @ApiOperation({
@@ -108,9 +114,11 @@ export class CafeController {
   @ApiInternalServerErrorResponse({
     description: 'Internal Server Error',
   })
+  @ApiBearerAuth('JWT')
   @Get(':id')
-  async getCafe(@Param('id', ParseIntPipe) id: number) {
-    return this.cafeService.getCafe(id);
+  @UseGuards(JwtAuthGuard)
+  async getCafe(@Param('id', ParseIntPipe) id: number, @GetUser() user?: User) {
+    return this.cafeService.getCafe(id, user?.uuid);
   }
 
   @ApiOperation({

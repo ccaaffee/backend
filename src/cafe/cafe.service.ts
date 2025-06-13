@@ -22,8 +22,8 @@ export class CafeService {
     private readonly imageService: ImageService,
   ) {}
 
-  async getCafe(id: number) {
-    const cafe = await this.cafeRepository.getCafe(id);
+  async getCafe(id: number, userUuid: string) {
+    const cafe = await this.cafeRepository.getCafe(id, userUuid);
 
     if (!cafe) {
       throw new NotFoundException('Cafe not found');
@@ -53,10 +53,11 @@ export class CafeService {
     return result;
   }
 
-  async searchCafeByName(name: string, query: PaginationDto) {
+  async searchCafeByName(name: string, query: PaginationDto, userUuid: string) {
     const { data, hasNextPage } = await this.cafeRepository.searchCafeByName(
       name,
       query,
+      userUuid,
     );
 
     const cafeList = await this.applyS3SignedUrlsForCafeList(data);
@@ -73,6 +74,7 @@ export class CafeService {
 
   async getNearCafeList(
     query: GetNearCafeListDto,
+    userUuid: string,
   ): Promise<GeneralCafeResDto[]> {
     // 한국 내부 좌표인지 확인
     if (!this.isValidKoreanGPS(query.latitude, query.longitude)) {
@@ -81,7 +83,7 @@ export class CafeService {
       );
     }
 
-    const cafeList = await this.cafeRepository.getNearCafeList(query);
+    const cafeList = await this.cafeRepository.getNearCafeList(query, userUuid);
 
     return await this.applyS3SignedUrlsForCafeList(cafeList);
   }

@@ -12,8 +12,8 @@ import { PaginationDto } from './dto/req/pagination.dto';
 export class CafeRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getCafe(id: number): Promise<GeneralCafeResDto> {
-    return await this.prismaService.cafe.findUnique({
+  async getCafe(id: number, userUuid?: string): Promise<GeneralCafeResDto> {
+    const cafe = await this.prismaService.cafe.findUnique({
       where: { id },
       include: {
         images: {
@@ -28,8 +28,28 @@ export class CafeRepository {
           orderBy: { id: 'asc' },
         },
         openHours: true,
+        userCafes: userUuid
+          ? {
+              where: {
+                userUuid,
+              },
+              select: {
+                status: true,
+              },
+            }
+          : undefined,
       },
     });
+
+    if (!cafe) {
+      return null;
+    }
+
+    const { userCafes, ...cafeWithoutUserCafes } = cafe;
+    return {
+      ...cafeWithoutUserCafes,
+      userPreference: userCafes?.[0]?.status || null,
+    };
   }
 
   async getMyLikeCafeList(
@@ -90,6 +110,7 @@ export class CafeRepository {
   async searchCafeByName(
     name: string,
     query: PaginationDto,
+    userUuid?: string,
   ): Promise<{
     data: GeneralCafeResDto[];
     hasNextPage: boolean;
@@ -121,6 +142,19 @@ export class CafeRepository {
           orderBy: { order: 'asc' },
         },
         openHours: true,
+        userCafes: userUuid
+          ? {
+              where: {
+                userUuid,
+              },
+              select: {
+                status: true,
+              },
+            }
+          : undefined,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
@@ -130,8 +164,13 @@ export class CafeRepository {
       rawResult.pop();
     }
 
+    const data = rawResult.map(({ userCafes, ...cafe }) => ({
+      ...cafe,
+      userPreference: userCafes?.[0]?.status || null,
+    }));
+
     return {
-      data: rawResult,
+      data,
       hasNextPage,
     };
   }
@@ -248,6 +287,7 @@ export class CafeRepository {
   // TODO: 물론, 관련 테스트는 무조건 할 것
   async getNearCafeList(
     query: GetNearCafeListDto,
+    userUuid?: string,
   ): Promise<GeneralCafeResDto[]> {
     const cafeList = await this.prismaService.$queryRaw<GeneralCafeResDto[]>`
       SELECT 
@@ -275,16 +315,21 @@ export class CafeRepository {
             'saturday', oh.saturday,
             'sunday', oh.sunday
           )
-        END AS openHours
+        END AS openHours,
+        MAX(uc.status) as userPreference
       FROM Cafe AS c
-      LEFT JOIN Image AS i ON c.id = i.cafeId
-      LEFT JOIN OpenHours AS oh
-        ON c.id = oh.cafeId
+        LEFT JOIN Image AS i 
+          ON c.id = i.cafeId
+        LEFT JOIN UserCafe AS uc
+          ON c.id = uc.cafeId
+          AND uc.userUuid = ${userUuid || null}
+        LEFT JOIN OpenHours AS oh
+          ON c.id = oh.cafeId
       WHERE ST_Distance_Sphere(
-        point(longitude, latitude),
-        point(${query.longitude}, ${query.latitude})
-      ) <= ${query.radiusInMeter}
-      GROUP BY c.id
+        point(c.longitude, c.latitude),
+          point(${query.longitude}, ${query.latitude})
+        ) <= ${query.radiusInMeter}
+      GROUP By c.id
     `;
 
     return cafeList;
@@ -368,7 +413,8 @@ export class CafeRepository {
             'saturday', oh.saturday,
             'sunday', oh.sunday
           )
-        END AS openHours
+        END AS openHours,
+        uc.status as userPreference
       FROM Cafe AS c
         LEFT JOIN Image AS i 
           ON c.id = i.cafeId

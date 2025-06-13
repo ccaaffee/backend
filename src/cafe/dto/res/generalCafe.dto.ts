@@ -88,6 +88,16 @@ export class GeneralCafeResDto {
   phone?: string;
 
   @ApiProperty({
+    type: String,
+    description: "User's preference status for this cafe",
+    example: 'LIKE',
+    required: false,
+    enum: ['LIKE', 'DISLIKE', null],
+  })
+  @IsOptional()
+  userPreference?: 'LIKE' | 'DISLIKE' | null;
+
+  @ApiProperty({
     type: Array<Image>,
     description: 'Image file s3 key list',
     example: [
