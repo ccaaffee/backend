@@ -422,7 +422,7 @@ export class CafeRepository {
             'sunday', oh.sunday
           )
         END AS openHours,
-        uc.status as userPreference
+        MAX(uc.status) as userPreference
       FROM Cafe AS c
         LEFT JOIN Image AS i 
           ON c.id = i.cafeId
