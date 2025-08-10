@@ -24,12 +24,11 @@ export class UserInfoDto {
 
   @ApiProperty({
     type: String,
-    description: "User's profile image signed URL",
+    description: "User's profile image signed URL or null if no image",
     example:
       'https://your-bucket.s3.region.amazonaws.com/production/profile/1234567890-abcdef.webp?signed-params',
-    required: false,
   })
-  profileImageUrl?: string;
+  profileImageUrl: string | null;
 
   @ApiProperty({
     type: Date,

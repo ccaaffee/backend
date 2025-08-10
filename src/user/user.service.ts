@@ -28,12 +28,15 @@ export class UserService {
       return null;
     }
 
-    const { profileImage, ...userWithoutProfileImage } = user;
-    const responseUser: UserInfo = userWithoutProfileImage;
+    const responseUser: UserInfo = {
+      ...user,
+      profileImageUrl: null,
+    };
 
-    if (profileImage) {
-      responseUser.profileImageUrl =
-        await this.imageService.generateSignedUrl(profileImage);
+    if (user.profileImage) {
+      responseUser.profileImageUrl = await this.imageService.generateSignedUrl(
+        user.profileImage,
+      );
     }
 
     return responseUser;
