@@ -85,7 +85,11 @@ export class UserService {
 
     // 새 이미지 업로드와 DB 업데이트가 성공했을 때만 기존 이미지 삭제
     if (oldProfileImageKey) {
-      await this.imageService.deleteProfileImage(oldProfileImageKey);
+      try {
+        await this.imageService.deleteProfileImage(oldProfileImageKey);
+      } catch (error) {
+        console.error('기존 프로필 이미지 삭제 실패:', error);
+      }
     }
 
     return updatedUser;
