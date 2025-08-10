@@ -57,4 +57,12 @@ export class UserRepository {
       data: { profileImage },
     });
   }
+
+  // 프로필 이미지 삭제
+  async deleteProfileImage(uuid: string) {
+    return this.prismaService.user.update({
+      where: { uuid },
+      data: { profileImage: null },
+    });
+  }
 }

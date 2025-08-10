@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  Delete,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from 'src/auth/jwt.auth.strategy';
@@ -147,10 +148,27 @@ export class UserController {
       throw new BadRequestException('No file uploaded');
     }
 
-    const updatedUser = await this.userService.updateProfileImage(
-      user.uuid,
-      file,
-    );
+    const updatedUser = await this.userService.updateProfileImage(user, file);
+    return this.userService.formatUserForResponse(updatedUser);
+  }
+
+  @ApiOperation({
+    summary: 'delete profile image',
+    description: '프로필 이미지를 삭제합니다.',
+  })
+  @ApiOkResponse({
+    type: UserInfoDto,
+    description: 'Return updated profile with deleted image',
+  })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @ApiInternalServerErrorResponse({
+    description: 'Internal Server Error',
+  })
+  @ApiBearerAuth('JWT')
+  @Delete('profile/image')
+  @UseGuards(JwtAuthGuard)
+  async deleteProfileImage(@GetUser() user: User): Promise<UserInfo> {
+    const updatedUser = await this.userService.deleteProfileImage(user);
     return this.userService.formatUserForResponse(updatedUser);
   }
 }

@@ -29,7 +29,10 @@ export class UserService {
     }
 
     const responseUser: UserInfo = {
-      ...user,
+      uuid: user.uuid,
+      kakaoId: user.kakaoId,
+      nickname: user.nickname,
+      createdAt: user.createdAt,
       profileImageUrl: null,
     };
 
@@ -61,10 +64,38 @@ export class UserService {
 
   // 프로필 이미지 업데이트
   async updateProfileImage(
-    uuid: string,
+    user: User,
     file: Express.Multer.File,
   ): Promise<User> {
-    const imageKey = await this.imageService.uploadProfileImage(file);
-    return this.userRepository.updateProfileImage(uuid, imageKey);
+    // 기존 프로필 이미지 키를 저장
+    const oldProfileImageKey = user.profileImage;
+
+    // 새로운 이미지를 먼저 S3에 업로드
+    const newImageKey = await this.imageService.uploadProfileImage(file);
+
+    // DB에 새로운 이미지 키 업데이트
+    const updatedUser = await this.userRepository.updateProfileImage(
+      user.uuid,
+      newImageKey,
+    );
+
+    // 새 이미지 업로드와 DB 업데이트가 성공했을 때만 기존 이미지 삭제
+    if (oldProfileImageKey) {
+      await this.imageService.deleteProfileImage(oldProfileImageKey);
+    }
+
+    return updatedUser;
+  }
+
+  // 프로필 이미지 삭제
+  async deleteProfileImage(user: User): Promise<User> {
+    // S3에서 기존 프로필 이미지 삭제
+    if (user.profileImage) {
+      await this.imageService.deleteProfileImage(user.profileImage);
+      // DB에서 User의 프로필 이미지 삭제 (null로 설정)
+      return this.userRepository.deleteProfileImage(user.uuid);
+    } else {
+      throw new ConflictException('프로필 이미지가 없습니다.');
+    }
   }
 }
