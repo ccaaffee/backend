@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { ImageService } from 'src/image/image.service';
 import { UserInfo } from 'src/auth/types/userInfo.type';
@@ -95,7 +99,7 @@ export class UserService {
       // DB에서 User의 프로필 이미지 삭제 (null로 설정)
       return this.userRepository.deleteProfileImage(user.uuid);
     } else {
-      throw new ConflictException('프로필 이미지가 없습니다.');
+      throw new NotFoundException('프로필 이미지가 없습니다.');
     }
   }
 }
