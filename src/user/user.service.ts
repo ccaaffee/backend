@@ -1,4 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { ImageService } from 'src/image/image.service';
 import { UserInfo } from 'src/auth/types/userInfo.type';
@@ -28,12 +32,18 @@ export class UserService {
       return null;
     }
 
-    const { profileImage, ...userWithoutProfileImage } = user;
-    const responseUser: UserInfo = userWithoutProfileImage;
+    const responseUser: UserInfo = {
+      uuid: user.uuid,
+      kakaoId: user.kakaoId,
+      nickname: user.nickname,
+      createdAt: user.createdAt,
+      profileImageUrl: null,
+    };
 
-    if (profileImage) {
-      responseUser.profileImageUrl =
-        await this.imageService.generateSignedUrl(profileImage);
+    if (user.profileImage) {
+      responseUser.profileImageUrl = await this.imageService.generateSignedUrl(
+        user.profileImage,
+      );
     }
 
     return responseUser;
@@ -58,10 +68,42 @@ export class UserService {
 
   // 프로필 이미지 업데이트
   async updateProfileImage(
-    uuid: string,
+    user: User,
     file: Express.Multer.File,
   ): Promise<User> {
-    const imageKey = await this.imageService.uploadProfileImage(file);
-    return this.userRepository.updateProfileImage(uuid, imageKey);
+    // 기존 프로필 이미지 키를 저장
+    const oldProfileImageKey = user.profileImage;
+
+    // 새로운 이미지를 먼저 S3에 업로드
+    const newImageKey = await this.imageService.uploadProfileImage(file);
+
+    // DB에 새로운 이미지 키 업데이트
+    const updatedUser = await this.userRepository.updateProfileImage(
+      user.uuid,
+      newImageKey,
+    );
+
+    // 새 이미지 업로드와 DB 업데이트가 성공했을 때만 기존 이미지 삭제
+    if (oldProfileImageKey) {
+      try {
+        await this.imageService.deleteProfileImage(oldProfileImageKey);
+      } catch (error) {
+        console.error('기존 프로필 이미지 삭제 실패:', error);
+      }
+    }
+
+    return updatedUser;
+  }
+
+  // 프로필 이미지 삭제
+  async deleteProfileImage(user: User): Promise<User> {
+    // S3에서 기존 프로필 이미지 삭제
+    if (user.profileImage) {
+      await this.imageService.deleteProfileImage(user.profileImage);
+      // DB에서 User의 프로필 이미지 삭제 (null로 설정)
+      return this.userRepository.deleteProfileImage(user.uuid);
+    } else {
+      throw new NotFoundException('프로필 이미지가 없습니다.');
+    }
   }
 }

@@ -149,6 +149,14 @@ export class ImageService {
   }
 
   /**
+   * 프로필 이미지 삭제
+   * @param key string
+   */
+  async deleteProfileImage(key: string): Promise<void> {
+    await this.deleteFile(key);
+  }
+
+  /**
    * 이미지를 WebP 형식으로 변환
    * @param file Express.Multer.File
    * @returns Express.Multer.File
